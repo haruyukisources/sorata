@@ -6,7 +6,7 @@ import * as fs from 'fs';
 
 export async function main() {
   // test load all markdown info
-  const uri = `mongodb://sorata.api.justforlxz.com:27017/`;
+  const uri = `mongodb://shanghai.tencent.justforlxz.com:27017/`;
   Mongoose.connect(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,

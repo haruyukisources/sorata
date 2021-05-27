@@ -6,7 +6,7 @@ export class DataBase {
   private database!: Mongoose.Connection;
 
   public async connect(): Promise<void> {
-    const uri = `mongodb://127.0.0.1:27017/`;
+    const uri = `mongodb://shanghai.tencent.justforlxz.com:27017/`;
     await Mongoose.connect(uri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
