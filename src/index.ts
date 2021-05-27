@@ -1,51 +1,12 @@
-import express from 'express';
-import { existsSync, readdirSync, readFileSync } from 'fs';
-import { DataBase } from './database/database';
 import { PostModel } from './models/post.model';
 import { IPost, IAttributes } from './types/post.types';
 import * as Mongoose from 'mongoose';
-import { ObjectId } from 'mongoose';
-import frontMatter from 'front-matter';
+import * as matter from 'gray-matter';
 import * as fs from 'fs';
 
-const database = new DataBase();
-
-export function app(): express.Express {
-  const server = express();
-  server.get('/api/', async (req, res) => {
-    const index = req.query['page'];
-    const num = +(index ?? 1);
-    res.json(await database.getPostBySplit(num, 10));
-  });
-
-  // server for blog api
-  server.get('/api/:year/:month/:day/:title', async (req, res) => {
-    const year: string = req.params['year'];
-    const month: string = req.params['month'];
-    const day: string = req.params['day'];
-    const title: string = req.params['title'];
-
-    res.json(await database.get(year, month, day, title));
-  });
-
-  server.get('/api/*', (req, res) => {
-    res.redirect('/');
-  });
-
-  return server;
-}
-
-function run(): void {
-  const port = process.env.PORT || 4001;
-  const server = app();
-  server.listen(port, () => {
-    console.log(`Server listening on http://localhost:${port}`);
-  });
-}
-
-async function main() {
+export async function main() {
   // test load all markdown info
-  const uri = `mongodb://127.0.0.1:27017/`;
+  const uri = `mongodb://sorata.api.justforlxz.com:27017/`;
   Mongoose.connect(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -70,24 +31,24 @@ async function main() {
       if (!stat.isFile()) {
         continue;
       }
-      const fm = frontMatter<IAttributes>(
+      const fm = matter(
         fs
           .readFileSync(`/home/lxz/Develop/blog/source/_posts/${post}`)
           .toString(),
       );
-      const date = new Date(fm.attributes.date);
+      const date = new Date(fm.data.date);
       const year = `${date.getFullYear()}`;
       const month = `${String(('0' + (date.getMonth() + 1)).slice(-2))}`;
       const day = `${String(('0' + date.getDate()).slice(-2))}`;
       const p = {
-        attributes: fm.attributes,
+        attributes: <IAttributes>fm.data,
         meta: {
           year,
           month,
           day,
-          title: fm.attributes.title.replace(' ', ''),
+          title: fm.data.title.replace(' ', ''),
         },
-        body: fm.body,
+        body: fm.content,
       } as IPost;
       p.attributes.author = 'lxz';
       postArray.push(p);
@@ -98,16 +59,4 @@ async function main() {
   database.on('error', () => {
     console.log('Error connecting to database');
   });
-}
-
-//main().catch(console.error);
-
-// Webpack will replace 'require' with '__webpack_require__'
-// '__non_webpack_require__' is a proxy to Node 'require'
-// The below code is to ensure that the server is run only when not requiring the bundle.
-declare const __non_webpack_require__: NodeRequire;
-const mainModule = __non_webpack_require__.main;
-const moduleFilename = (mainModule && mainModule.filename) || '';
-if (moduleFilename === __filename || moduleFilename.includes('iisnode')) {
-  run();
 }
