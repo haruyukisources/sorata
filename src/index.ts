@@ -3,11 +3,12 @@ import { IPost, IAttributes } from './types/post.types';
 import * as Mongoose from 'mongoose';
 import * as matter from 'gray-matter';
 import * as fs from 'fs';
+import { Marked } from '@ts-stack/markdown';
 
 export async function main() {
   // test load all markdown info
   const uri = `mongodb://shanghai.tencent.justforlxz.com:27017/`;
-  Mongoose.connect(uri, {
+  const database = Mongoose.createConnection(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     auth: {
@@ -17,14 +18,11 @@ export async function main() {
     dbName: 'mashiro',
   });
 
-  const database = Mongoose.connection;
-  database.once('open', async () => {
-    console.log('Connected to database');
+  database.on('connected', async () => {
+    console.log('Connected to database', database);
     const postArray: IPost[] = [];
     const posts = fs.readdirSync('/home/lxz/Develop/blog/source/_posts');
     for (const post of posts) {
-      console.log(post);
-      fs.stat;
       const stat = await fs.promises.lstat(
         `/home/lxz/Develop/blog/source/_posts/${post}`,
       );
@@ -40,21 +38,24 @@ export async function main() {
       const year = `${date.getFullYear()}`;
       const month = `${String(('0' + (date.getMonth() + 1)).slice(-2))}`;
       const day = `${String(('0' + date.getDate()).slice(-2))}`;
+      const title = String(fm.data.title).replace(/\s/g, '');
       const p = {
         attributes: <IAttributes>fm.data,
         meta: {
           year,
           month,
           day,
-          title: fm.data.title.replace(' ', ''),
+          title,
+          link: `/${year}/${month}/${day}/${title}`,
         },
-        body: fm.content,
+        body: Marked.parse(fm.content),
       } as IPost;
       p.attributes.author = 'lxz';
       postArray.push(p);
     }
-
-    PostModel.insertMany(postArray);
+    await PostModel.insertMany(postArray);
+    console.log(await PostModel.find({}));
+    await database.close();
   });
   database.on('error', () => {
     console.log('Error connecting to database');

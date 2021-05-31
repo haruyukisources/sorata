@@ -3,6 +3,7 @@ import { main } from 'src';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  await main().catch(console.error);
   const app = await NestFactory.create(AppModule);
   app.enableCors({
     origin: '*', // need change to development or production.
@@ -10,7 +11,6 @@ async function bootstrap() {
     preflightContinue: false,
     optionsSuccessStatus: 204,
   });
-  //await main().catch(console.error);
-  await app.listen(3000);
+  await app.listen(3001);
 }
 bootstrap();

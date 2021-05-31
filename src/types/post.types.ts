@@ -15,6 +15,7 @@ export interface IMeta {
   month: string;
   day: string;
   title: string;
+  link: string;
 }
 
 export interface IPost {
