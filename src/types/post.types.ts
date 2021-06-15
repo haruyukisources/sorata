@@ -1,4 +1,4 @@
-import { Document, Model } from 'mongoose';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 export interface IAttributes {
   title: string;
@@ -19,9 +19,67 @@ export interface IMeta {
 }
 
 export interface IPost {
-  attributes: IAttributes;
   body: string;
 }
 
-export interface IPostDocument extends Document, IPost {}
-export type IPostModel = Model<IPostDocument>;
+@Entity('Attributes')
+export class Attributes implements IAttributes {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  title: string;
+
+  @Column()
+  date: Date;
+
+  author: string;
+
+  @Column()
+  subtitle?: string;
+
+  @Column({ type: 'varchar' })
+  'header-img': string;
+
+  @Column({ type: 'varchar' })
+  tags?: string | string[];
+
+  @Column({ type: 'varchar' })
+  category?: string | string[];
+}
+
+@Entity('Post')
+export class Post implements IPost {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  attributes: number;
+
+  @Column('text')
+  body: string;
+}
+
+@Entity('Meta')
+export class Meta implements IMeta {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  post: number;
+
+  @Column()
+  year: string;
+
+  @Column()
+  month: string;
+
+  @Column()
+  day: string;
+
+  @Column()
+  title: string;
+
+  @Column()
+  link: string;
+}

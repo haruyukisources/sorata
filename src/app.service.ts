@@ -1,16 +1,12 @@
-import { Logger, Injectable } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 
-import { DataBase } from './database/database';
+import { DbService } from './db.service';
 import { IPost } from './types/post.types';
 
-@Injectable()
 export class AppService {
-  private _database: DataBase;
   private readonly logger = new Logger('AppService');
-  constructor() {
-    this._database = new DataBase();
-    this._database.connect();
-  }
+  constructor(private db: DbService) {}
+
   async getPost(
     year: string,
     month: string,
@@ -19,12 +15,7 @@ export class AppService {
     overview: boolean,
   ): Promise<IPost | null> {
     this.logger.log(`/${year}/${month}/${day}/${title} overview: ${overview}`);
-    const post: IPost | null = await this._database.get(
-      year,
-      month,
-      day,
-      title,
-    );
+    const post: IPost | null = await this.db.get(year, month, day, title);
 
     if (post && overview) {
       const p = post.body.split('\n');
@@ -44,6 +35,6 @@ export class AppService {
   }
 
   async getPostBySplit(index: number, maxAge: number): Promise<IPost[] | null> {
-    return this._database.getPostBySplit(index, maxAge);
+    return this.db.getPostBySplit(index, maxAge);
   }
 }
