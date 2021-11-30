@@ -1,45 +1,45 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { Post, Meta, Attributes } from './types/post.types';
-import { IAttributes, IPost } from './types/post.types';
+import { Post, Meta, Attributes } from './entity';
 import * as matter from 'gray-matter';
 import * as fs from 'fs';
 import { Marked } from '@ts-stack/markdown';
+import { AppSetting } from 'src/app.setting';
+import * as path from 'path';
 
 @Injectable()
-export class DbService {
+export class EntityService {
+  private appSetting: AppSetting;
+  private readonly logger = new Logger('EntityService');
   constructor(
-    @InjectRepository(Post)
+    @Inject('POST_REPOSITORY')
     private postRepository: Repository<Post>,
-    @InjectRepository(Meta)
+    @Inject('META_REPOSITORY')
     private metaRepository: Repository<Meta>,
-    @InjectRepository(Attributes)
+    @Inject('ATTRIBUTE_REPOSITORY')
     private attributesRepository: Repository<Attributes>,
   ) {
+    this.appSetting = new AppSetting();
     this.initDatabase();
+    // TODO: 读取数据库，获取配置的仓库，初始化git
   }
 
   async initDatabase() {
-    const posts = fs.readdirSync('/home/lxz/Develop/blog/source/_posts');
+    const scandir = this.appSetting.settings.scandir;
+    const posts = fs.readdirSync(scandir);
     for (const post of posts) {
-      const stat = await fs.promises.lstat(
-        `/home/lxz/Develop/blog/source/_posts/${post}`,
-      );
+      const file = path.join(scandir, post);
+      const stat = await fs.promises.lstat(file);
       if (!stat.isFile()) {
         continue;
       }
-      const fm = matter(
-        fs
-          .readFileSync(`/home/lxz/Develop/blog/source/_posts/${post}`)
-          .toString(),
-      );
-
+      this.logger.debug(file);
+      const fm = matter(fs.readFileSync(file).toString());
       const p = {
         body: Marked.parse(fm.content),
-      } as IPost;
+      } as Post;
 
-      const attributes = <IAttributes>fm.data;
+      const attributes = <Attributes>fm.data;
       attributes.author = 'lxz';
 
       await this.addPost(attributes, p);
@@ -47,8 +47,8 @@ export class DbService {
   }
 
   public async addPost(
-    attributes: IAttributes,
-    post: IPost,
+    attributes: Attributes,
+    post: Post,
   ): Promise<Post | Error> {
     if (!this.postRepository) {
       const error = new Error('post database not connected!');
@@ -102,8 +102,8 @@ export class DbService {
   public async getPostBySplit(
     index: number,
     maxAge: number,
-  ): Promise<IPost[] | null> {
-    let post: IPost[] | null = null;
+  ): Promise<Post[] | null> {
+    let post: Post[] | null = null;
     try {
       post = await this.postRepository
         .createQueryBuilder('post')
@@ -123,8 +123,8 @@ export class DbService {
     month: string,
     day: string,
     title: string,
-  ): Promise<IPost | null | undefined> {
-    let post: IPost | null = null;
+  ): Promise<Post | null | undefined> {
+    let post: Post | null = null;
     try {
       const meta = await this.metaRepository.findOne({
         year,

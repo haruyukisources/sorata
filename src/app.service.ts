@@ -1,11 +1,10 @@
 import { Logger } from '@nestjs/common';
-
-import { DbService } from './db.service';
-import { IPost } from './types/post.types';
+import { Post } from './entity/entity';
+import { EntityService } from './entity/entity.service';
 
 export class AppService {
   private readonly logger = new Logger('AppService');
-  constructor(private db: DbService) {}
+  constructor(private entityService: EntityService) {}
 
   async getPost(
     year: string,
@@ -13,9 +12,14 @@ export class AppService {
     day: string,
     title: string,
     overview: boolean,
-  ): Promise<IPost | null> {
+  ): Promise<Post | null> {
     this.logger.log(`/${year}/${month}/${day}/${title} overview: ${overview}`);
-    const post: IPost | null = await this.db.get(year, month, day, title);
+    const post: Post | null = await this.entityService.get(
+      year,
+      month,
+      day,
+      title,
+    );
 
     if (post && overview) {
       const p = post.body.split('\n');
@@ -34,7 +38,7 @@ export class AppService {
     return post;
   }
 
-  async getPostBySplit(index: number, maxAge: number): Promise<IPost[] | null> {
-    return this.db.getPostBySplit(index, maxAge);
+  async getPostBySplit(index: number, maxAge: number): Promise<Post[] | null> {
+    return this.entityService.getPostBySplit(index, maxAge);
   }
 }

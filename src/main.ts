@@ -1,5 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import * as shell from 'shelljs';
+
+/*
+ * check dependencies
+ * needs:
+ * - git
+ */
+
+if (!shell.which('git')) {
+  shell.echo('Sorry, this script requires git');
+  shell.exit(1);
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -11,11 +23,5 @@ async function bootstrap() {
   });
   await app.listen(3001);
 }
-
-/*
- * check dependencies
- * needs:
- * - git
- */
 
 bootstrap();
