@@ -19,9 +19,18 @@ export class AppController {
     return this.appService.getPost(year, month, day, title, overviewFLag);
   }
 
+  @Get('/page')
+  @Get('/')
+  async page(): Promise<Post[] | null> {
+    return this.getPage('0');
+  }
+
   @Get('/page/:page')
-  async page(@Param('page') page: string | undefined): Promise<Post[] | null> {
+  async getPage(
+    @Param('page') page: string | undefined,
+  ): Promise<Post[] | null> {
     // NOTE: the + can be translated string to int
+    this.logger.log(`page: ${page}`);
     return this.appService.getPostBySplit(page ? +page : 1, 5);
   }
 

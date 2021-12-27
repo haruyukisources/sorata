@@ -42,21 +42,26 @@ export class DatabaseService {
         continue;
       }
       const fm = matter(fs.readFileSync(file, 'utf8'));
-      const p = {
-        body: Marked.parse(fm.content),
-      } as Post;
-
       const attributes = fm.data;
-      if (!attributes.author) {
-        p.author = 'lxz';
-      }
 
-      p['header-img'] = attributes['header-img'];
-      p.category = attributes['category'];
-      p.date = attributes['date'];
-      p.tags = attributes['tags'];
+      const date = new Date(attributes['date']);
+      const year = `${date.getFullYear()}`;
+      const month = `${String(('0' + (date.getMonth() + 1)).slice(-2))}`;
+      const day = `${String(('0' + date.getDate()).slice(-2))}`;
+      const title = String(attributes.title).replace(/\s/g, '');
 
-      await this.addPost(p);
+      await this.addPost({
+        body: Marked.parse(fm.content),
+        author: attributes.author ?? 'lxz',
+        'header-img': attributes['header-img'],
+        category: attributes['category'],
+        date,
+        tags: attributes['tags'],
+        id: 0,
+        title: attributes['title'],
+        local_path: file,
+        url: `${year}/${month}/${day}/${title}`,
+      });
     }
   }
 
@@ -77,6 +82,7 @@ export class DatabaseService {
 
   public async addPost(post: Post): Promise<Post | Error> {
     // TODO: fake db
+    this.logger.log(`add post: ${post.title}`);
     this.posts.push(post);
     return post;
 
@@ -114,6 +120,19 @@ export class DatabaseService {
     index: number,
     maxAge: number,
   ): Promise<Post[] | null> {
+    const posts: Post[] = [];
+    const v = index * maxAge;
+    if (v >= this.posts.length) {
+      this.logger.error(`invalid page ${index}`);
+      return null;
+    }
+
+    for (let i = v; i <= v + maxAge; i++) {
+      posts.push(this.posts[i]);
+    }
+
+    return posts.length != 0 ? posts : null;
+
     let post: Post[] | null = null;
     try {
       post = await this.postRepository
@@ -135,7 +154,13 @@ export class DatabaseService {
     day: string,
     title: string,
   ): Promise<Post | null | undefined> {
-    return null;
+    for (const post of this.posts) {
+      if (`${year}/${month}/${day}/${title}` == post.url) {
+        return post;
+      }
+    }
+
+    return undefined;
   }
 
   async getPost(

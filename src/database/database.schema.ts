@@ -31,4 +31,7 @@ export class Post {
 
   @Column('text')
   local_path: string;
+
+  @Column('text')
+  url: string;
 }
