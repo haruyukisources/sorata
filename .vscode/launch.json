@@ -13,7 +13,7 @@
             "program": "${workspaceFolder}/dist/main.js",
             "args": [
                 "--config",
-                "./config.yaml"
+                "~/.cache/sorata/config.yaml"
             ],
             "protocol": "inspector",    //相当于--inspect了
             "sourceMaps": true,

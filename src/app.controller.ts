@@ -1,9 +1,10 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Logger, Param, Query } from '@nestjs/common';
 import { AppService } from './app.service';
-import { Post } from './entity/entity';
+import { Post } from './database/database.schema';
 
 @Controller('blog')
 export class AppController {
+  private readonly logger = new Logger('AppController');
   constructor(private readonly appService: AppService) {}
 
   @Get('/:year/:month/:day/:title')
@@ -20,6 +21,7 @@ export class AppController {
 
   @Get('/page/:page')
   async page(@Param('page') page: string | undefined): Promise<Post[] | null> {
+    // NOTE: the + can be translated string to int
     return this.appService.getPostBySplit(page ? +page : 1, 5);
   }
 

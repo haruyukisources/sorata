@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
-import { databaseProviders } from './database.providers';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from 'src/config/config.module';
+import { Post } from './database.schema';
+import { DatabaseService } from './database.service';
 
 @Module({
-  providers: [...databaseProviders],
-  exports: [...databaseProviders],
+  imports: [ConfigModule, TypeOrmModule.forFeature([Post])],
+  providers: [DatabaseService],
+  exports: [DatabaseService],
 })
 export class DatabaseModule {}

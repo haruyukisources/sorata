@@ -1,10 +1,38 @@
-import { Logger } from '@nestjs/common';
-import { Post } from './entity/entity';
-import { EntityService } from './entity/entity.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { Post } from './database/database.schema';
+import { DatabaseService } from './database/database.service';
 
+@Injectable()
 export class AppService {
   private readonly logger = new Logger('AppService');
-  constructor(private entityService: EntityService) {}
+  constructor(private db: DatabaseService) {
+    this.logger.log(this.db);
+    (async () => this.db.initDatabase())();
+  }
+
+  private async updatePost(post: Post): Promise<Post> {
+    return this.db.updatePost(post);
+  }
+
+  public async addPost(post: Post): Promise<Post | Error> {
+    return this.db.addPost(post);
+  }
+
+  public async getPostBySplit(
+    index: number,
+    maxAge: number,
+  ): Promise<Post[] | null> {
+    return await this.db.getPostBySplit(index, maxAge);
+  }
+
+  public async get(
+    year: string,
+    month: string,
+    day: string,
+    title: string,
+  ): Promise<Post | null | undefined> {
+    return await this.db.get(year, month, day, title);
+  }
 
   async getPost(
     year: string,
@@ -14,31 +42,6 @@ export class AppService {
     overview: boolean,
   ): Promise<Post | null> {
     this.logger.log(`/${year}/${month}/${day}/${title} overview: ${overview}`);
-    const post: Post | null = await this.entityService.get(
-      year,
-      month,
-      day,
-      title,
-    );
-
-    if (post && overview) {
-      const p = post.body.split('\n');
-      for (const line of p) {
-        const result = line.trim();
-        if (result.startsWith('<p>')) {
-          post.body = result.substr(
-            '<p>'.length,
-            result.length - '<p></p>'.length,
-          );
-          break;
-        }
-      }
-    }
-
-    return post;
-  }
-
-  async getPostBySplit(index: number, maxAge: number): Promise<Post[] | null> {
-    return this.entityService.getPostBySplit(index, maxAge);
+    return await this.db.getPost(year, month, day, title, overview);
   }
 }
